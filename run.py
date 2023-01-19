@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from email.mime.text import MIMEText
 from os.path import exists
 
+
 def isDateOld(dateStr: str, dateRange: int) -> bool:
     """Compare the date of the listing to the date Range specified by user
 
@@ -18,10 +19,11 @@ def isDateOld(dateStr: str, dateRange: int) -> bool:
     Returns:
         bool: _description_
     """
-    date = datetime.strptime(dateStr,'%a, %d %b %Y %H:%M:%S %Z')
+    date = datetime.strptime(dateStr, "%a, %d %b %Y %H:%M:%S %Z")
     now = datetime.now()
     dateDelta = now - date
     return dateDelta.days > dateRange
+
 
 def updateDateRange(lastCheckDate: datetime, dateRange: str) -> None:
     """Update date Range if passed in datetime is less days from now till then.
@@ -42,6 +44,7 @@ def updateDateRange(lastCheckDate: datetime, dateRange: str) -> None:
     else:
         return dateRange
 
+
 def sendEmail(subject: str, body: str) -> None:
     """Send email with information based on environmental variables passed in.
 
@@ -49,18 +52,18 @@ def sendEmail(subject: str, body: str) -> None:
         subject (str): Email subject
         body (str): Email body
     """
-    #TODO What if .env file is empty?
+    # TODO What if .env file is empty?
     load_dotenv()
-    sender = os.getenv('EMAIL_SENDER')
-    SenderSMTP = os.getenv('SENDER_SMTP')
-    senderPassword = os.getenv('SENDER_PASSWORD')
-    reciever = os.getenv('EMAIL_RECEIVER')
-    
+    sender = os.getenv("EMAIL_SENDER")
+    SenderSMTP = os.getenv("SENDER_SMTP")
+    senderPassword = os.getenv("SENDER_PASSWORD")
+    reciever = os.getenv("EMAIL_RECEIVER")
+
     if senderPassword:
         msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = sender
-        msg['To'] = reciever
+        msg["Subject"] = subject
+        msg["From"] = sender
+        msg["To"] = reciever
         try:
             smtp_server = smtplib.SMTP_SSL(SenderSMTP, 465)
             smtp_server.login(sender, senderPassword)
@@ -71,21 +74,26 @@ def sendEmail(subject: str, body: str) -> None:
         else:
             print("Email Sent Successfully!")
     else:
-        print("Warning: No email account name or password found from env, not sending email.")
+        print(
+            "Warning: No email account name or password found from env, not sending email."
+        )
+
 
 def createPersistantFile(date: datetime) -> None:
-    """create persistent file in /tmp/ directory so next time script runs it knows listings it already emailed/mentioned.
+    """create persistent file in /tmp/ directory so next time
+       script runs it knows listings it already emailed/mentioned.
 
     Args:
         date (datetime): datetime object, should be current time.
     """
-    op = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
+    op = datetime.strftime(date, "%Y-%m-%d %H:%M:%S")
     fname = "/tmp/rpiLocator.tmp"
     with open(fname, "w") as f:
         f.write(op)
 
+
 def readPersistantFile() -> datetime:
-    """Read persistent file 
+    """Read persistent file
 
     Returns:
         datetime: datetime object found in persistent file converted from string.
@@ -96,29 +104,35 @@ def readPersistantFile() -> datetime:
     try:
         with open(fname, "r") as f:
             date = f.read()
-        date = datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
+        date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
     except Exception:
-        print("Error: Issues reading persisant file, probably was modfied to not be a date.")
+        print(
+            "Error: Issues reading persisant file, probably was modfied to not be a date."
+        )
     else:
         date = None
     return date
 
+
 def run(region: str, category: str, dateRange: int, isTrial: bool = False) -> None:
-    """ Main function
+    """Main function
 
     Args:
         region (str): Region to check for rPi
         category (str): Model of rPi
         dateRange (int): How far back in time to check postings
-        isTrial (bool, optional): Send email if False, otherwise only print to stout. Defaults to False.
+        isTrial (bool, optional): Send email if False, otherwise
+            only print to stout. Defaults to False.
     """
     # Get piLocatorFeed
-    print(f"Checking rpilocator for {category if category else 'all' } Pi Models in {region if region else 'all'} region(s) in the last {dateRange} days.")
+    print(
+        f"Checking rpilocator for {category if category else 'all' } Pi Models in {region if region else 'all'} region(s) in the last {dateRange} days."
+    )
     # Add url paramters based on if region and category were passed in.
     url = "https://rpilocator.com/feed/"
     if region and category:
         url = f"{url}?country={region}&cat={category}"
-        
+
     elif region:
         url = f"{url}?country={region}"
     elif category:
@@ -126,7 +140,7 @@ def run(region: str, category: str, dateRange: int, isTrial: bool = False) -> No
     piLocatorFeed = feedparser.parse(url)
     piFound = False
     # dateRange = updateDateRange(readPersistantFile(), dateRange)
-    body = f"{region} Store carrying {category} pi's posted stock. Here are listings." 
+    body = f"{region} Store carrying {category} pi's posted stock. Here are listings."
     # Collect all entries that meet condition to push in one email.
     for entry in piLocatorFeed.entries:
         # Determine if the pi is model, region, and date match
@@ -152,7 +166,7 @@ def run(region: str, category: str, dateRange: int, isTrial: bool = False) -> No
         print(subject)
         print(body)
         print("******")
-    
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
