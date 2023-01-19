@@ -8,13 +8,34 @@ Simple Python RSS feed tracker for piLocator
 
 ## Setup
 
-A Python virtual environment doesn't have to be used, but is recommend.  Otherwise jump to run after installing required pip packages.
+### Python packages
+
+A Python virtual environment doesn't have to be used, but is recommend.
 
 ```bash
 python -m venv ./pilocatorEnv; \
 source ./pilocatorEnv/bin/activate; \
 pip install -r requirements.txt
 ```
+
+### Email Credentials
+
+This step isn't required if you don't want to send an email, run script without pass `-t` flag.
+
+In the root dir of repo a .env file will need to be created.  If using Docker secrets, or passing in environmental variables with another method just make sure variables in .env match.
+
+```text
+EMAIL_SENDER=
+SENDER_SMTP=
+SENDER_PASSWORD=
+EMAIL_RECEIVER=
+```
+
+#### Warning
+
+Your email is the last line of defense for nearly every online account you own.
+
+If you don't know or trust the computer or file location where your password will be.  Better to be safe than sorry, and don't set this up for email.
 
 ## Running
 
