@@ -27,7 +27,7 @@ Use Cron to have this script automatically run whenever you desire.  Though run 
 To access cron, use the command `crontab -l` to view your user cronjobs, and `crontab -e` to edit them.
 
 ```cron
-0 */6 * * *Path/To/Repository/run.py > /dev/null
+0 */6 * * * python Path/To/Repository/run.py -a 0 -r US -m CM4 > /dev/null
 ```
 
 ## Testing

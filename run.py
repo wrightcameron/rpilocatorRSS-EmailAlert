@@ -6,13 +6,14 @@ import smtplib
 from datetime import datetime
 from dotenv import load_dotenv
 from email.mime.text import MIMEText
+from os.path import exists
 
 def isDateOld(dateStr: str, dateRange: int) -> bool:
-    """_summary_
+    """Compare the date of the listing to the dateRange specified by user
 
     Args:
-        dateStr (str): _description_
-        dateRange (int): _description_
+        dateStr (str): GMT date from RSS entry
+        dateRange (int): date range user specified when running script
 
     Returns:
         bool: _description_
@@ -22,12 +23,31 @@ def isDateOld(dateStr: str, dateRange: int) -> bool:
     dateDelta = now - date
     return dateDelta.days > dateRange
 
-def sendEmail(subject: str, body: str) -> None:
-    """_summary_
+def updateDateRange(lastCheckDate: datetime, dateRange: str) -> None:
+    """Update dateRange if passed in datetime is less days from now till then.
 
     Args:
-        subject (str): _description_
-        body (str): _description_
+        lastCheckDate (datetime): datetime object found from persistant file
+        dateRange (str): date range user specified when running script
+
+    Returns:
+        _type_: _description_
+    """
+    if lastCheckDate is None:
+        return dateRange
+    now = datetime.now()
+    dateDelta = now - lastCheckDate
+    if dateDelta.days < dateRange:
+        return dateDelta.days
+    else:
+        return dateRange
+
+def sendEmail(subject: str, body: str) -> None:
+    """Send email with information based on environmental variables passed in.
+
+    Args:
+        subject (str): Email subject
+        body (str): Email body
     """
     load_dotenv()
     sender = os.getenv('EMAIL_SENDER')
@@ -44,14 +64,44 @@ def sendEmail(subject: str, body: str) -> None:
     smtp_server.sendmail(sender, reciever, msg.as_string())
     smtp_server.quit()
 
-def run(region: str, catagory: str, dateRange: int, isTrial: bool = False) -> None:
-    """
+def createPersistantFile(date: datetime) -> None:
+    """create persistant file in /tmp/ directory so next time script runs it knows listings it already emailed/mentioned.
 
     Args:
-        region (str): _description_
-        catagory (str): _description_
-        dateRange (int): _description_
-        isTrial (bool, optional): _description_. Defaults to False.
+        date (datetime): datetime object, should be current time.
+    """
+    op = datetime.strftime(date, '%Y-%m-%d %H:%M:%S')
+    fname = "/tmp/rpiLocator.tmp"
+    with open(fname, "w") as f:
+        f.write(op)
+
+def readPersistantFile() -> datetime:
+    """Read persistant file 
+
+    Returns:
+        datetime: datetime object found in persistant file coverted from string.
+    """
+    fname = "/tmp/rpiLocator.tmp"
+    if not exists(fname):
+        return None
+    try:
+        with open(fname, "r") as f:
+            date = f.read()
+        date = datetime.strptime(date,'%Y-%m-%d %H:%M:%S')
+    except Exception:
+        print("Error: Issues reading persisant file, probably was modfied to not be a date.")
+    else:
+        date = None
+    return date
+
+def run(region: str, catagory: str, dateRange: int, isTrial: bool = False) -> None:
+    """ Main function
+
+    Args:
+        region (str): Region to check for rPi
+        catagory (str): Model of rPi
+        dateRange (int): How far back in time to check postings
+        isTrial (bool, optional): Send email if False, otherwise only print to stout. Defaults to False.
     """
     # Get piLocatorFeed
     print(f"Checking rpilocator for {catagory if catagory else 'all' } Pi Models in {region if region else 'all'} region(s) in the last {dateRange} days.")
@@ -64,9 +114,9 @@ def run(region: str, catagory: str, dateRange: int, isTrial: bool = False) -> No
         url = f"{url}?country={region}"
     elif catagory:
         url = f"{url}?cat={catagory}"
-    # url = './1k1avZm_'  # FOR DEBUGGING
     piLocatorFeed = feedparser.parse(url)
     piFound = False
+    # dateRange = updateDateRange(readPersistantFile(), dateRange)
     body = f"{region} Store carrying {catagory} pi's posted stock. Here are listings." 
     # Collect all entries that meet condition to push in one email.
     for entry in piLocatorFeed.entries:
@@ -86,6 +136,10 @@ def run(region: str, catagory: str, dateRange: int, isTrial: bool = False) -> No
             sendEmail(subject, body)
         else:
             print("Trial run, not sending email.")
+        # DateRange of 0 would still have that last 24 hours postings show up
+        # TODO Need to compare listings by hour or minute for persitant file to work properly.
+        # if dateRange == 0:
+        #     createPersistantFile(datetime.now())
         print(subject)
         print(body)
         print("******")
@@ -100,5 +154,5 @@ if __name__ == "__main__":
     parser.add_argument("-r", "--region", type=str, help="Region the Pi is sold from.")
     parser.add_argument("-t", "--trial", action='store_true', help="Run script without pushing any potential emails")
     args = parser.parse_args()
-
+    # TODO What if someone wanted to check multiple regions or models.  Url allows multiple paramters
     run(args.region, args.model, args.age, args.trial)
