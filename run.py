@@ -3,6 +3,7 @@ import datetime
 import feedparser
 import os
 import smtplib
+import apprise
 from datetime import datetime
 from dotenv import load_dotenv
 from email.mime.text import MIMEText
@@ -45,38 +46,31 @@ def updateDateRange(lastCheckDate: datetime, dateRange: str) -> None:
         return dateRange
 
 
-def sendEmail(subject: str, body: str) -> None:
-    """Send email with information based on environmental variables passed in.
+def sendTelegramAlert(subject: str, body: str) -> None:
+    """Send Telegram message notifying owner of Telegram bot about Alerts.
 
     Args:
-        subject (str): Email subject
-        body (str): Email body
+        subject (str): Text subject
+        body (str): Telegram text message
     """
-    # TODO What if .env file is empty?
     load_dotenv()
-    sender = os.getenv("EMAIL_SENDER")
-    SenderSMTP = os.getenv("SENDER_SMTP")
-    senderPassword = os.getenv("SENDER_PASSWORD")
-    reciever = os.getenv("EMAIL_RECEIVER")
-
-    if senderPassword:
-        msg = MIMEText(body)
-        msg["Subject"] = subject
-        msg["From"] = sender
-        msg["To"] = reciever
-        try:
-            smtp_server = smtplib.SMTP_SSL(SenderSMTP, 465)
-            smtp_server.login(sender, senderPassword)
-            smtp_server.sendmail(sender, reciever, msg.as_string())
-            smtp_server.quit()
-        except Exception:
-            print("Error: Failure to send email")
-        else:
-            print("Email Sent Successfully!")
+    token = os.getenv("BOT_TOKEN")
+    if token is None or token is "":
+        print("Error: Can't find env variable bot_token for Telegram.")
+        return
+    if len(body) >= 4096:
+        print("Subject larger than Telegram max size 4096, chopping of end of message.")
+        body = body[:4000]
+    apobj = apprise.Apprise()
+    apobj.add(f"tgram://{token}")
+    exitStatus = apobj.notify(
+        body=body,
+        title=subject,
+    )
+    if exitStatus:
+        print("Telegram sent!")
     else:
-        print(
-            "Warning: No email account name or password found from env, not sending email."
-        )
+        print("Error: Failure sending Telegram.")
 
 
 def createPersistantFile(date: datetime) -> None:
@@ -156,7 +150,7 @@ def run(region: str, category: str, dateRange: int, isTrial: bool = False) -> No
     if piFound:
         subject = f"rpilocator: {category} models in region {region} posted!"
         if not isTrial:
-            sendEmail(subject, body)
+            sendTelegramAlert(subject, body)
         else:
             print("Trial run, not sending email.")
         # DateRange of 0 would still have that last 24 hours postings show up
@@ -172,10 +166,21 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="PiLocatorRSSAlert: RSS Feed Reader Alert Script. Send email when desirable Pi found."
     )
-    parser.add_argument("-a", "--age", type=int, help="The amount of day's old an alert can be.", default=0)
+    parser.add_argument(
+        "-a",
+        "--age",
+        type=int,
+        help="The amount of day's old an alert can be.",
+        default=0,
+    )
     parser.add_argument("-m", "--model", type=str, help="Pi Model to alert for.")
     parser.add_argument("-r", "--region", type=str, help="Region the Pi is sold from.")
-    parser.add_argument("-t", "--trial", action='store_true', help="Run script without pushing any potential emails")
+    parser.add_argument(
+        "-t",
+        "--trial",
+        action="store_true",
+        help="Run script without pushing any potential emails",
+    )
     args = parser.parse_args()
     # TODO What if someone wanted to check multiple regions or models.  Url allows multiple parameters
     run(args.region, args.model, args.age, args.trial)

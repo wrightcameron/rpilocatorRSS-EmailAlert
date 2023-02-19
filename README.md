@@ -1,6 +1,6 @@
-# rpilocator RSS Email Alert
+# rpilocator RSS Telegram Alert
 
-Simple Python RSS feed tracker for piLocator
+Simple Python RSS feed tracker for rpiLocator
 
 ## Requirements
 
@@ -18,24 +18,32 @@ source ./pilocatorEnv/bin/activate; \
 pip install -r requirements.txt
 ```
 
-### Email Credentials
+### Telegram Credentials
 
-This step isn't required if you don't want to send an email, run script without pass `-t` flag.
+This step isn't required if you don't want to send a Telegram message, run script without pass `-t` flag.
 
-In the root dir of repo a .env file will need to be created.  If using Docker secrets, or passing in environmental variables with another method just make sure variables in .env match.
+In the root dir of repo a *.env* file will need to be created.  If using Docker secrets, or passing in environmental variables with another method just make sure variables in *.env* match.
 
 ```text
-EMAIL_SENDER=
-SENDER_SMTP=
-SENDER_PASSWORD=
-EMAIL_RECEIVER=
+BOT_TOKEN=
 ```
+
+#### Telegram Bot Setup
+
+Follow these instructions for obtaining a Telegram bot and the API Token.  Steps referenced are from [apprise Telegram Docs](https://github.com/caronc/apprise/wiki/Notify_telegram)
+
+Telegram notifications require you to create a bot. It's only after this is done that you will gain a vital piece of information Apprise needs called the Token Identifier (or bot_token).
+
+To do this you will have to open a communication (inside Telegram) to the BotFather. He is available to all users signed up to the platform. Once you've got a dialog box open to him:
+
+1. Type: /newbot
+2. Answer the questions it asks after doing this (which get the name of it, etc).
+3. When you've completed step 2, you will be provided a bot_token that looks something like this: 123456789:alphanumeric_characters.
+4. Type /start now in the same dialog box to enable and instantiate your brand new bot.
 
 #### Warning
 
-Your email is the last line of defense for nearly every online account you own.
-
-If you don't know or trust the computer or file location where your password will be.  Better to be safe than sorry, and don't set this up for email.
+Don't share this Telegram Bot Token with anyone else, or push into a public location like accidentally onto Github
 
 ## Running
 
@@ -43,13 +51,21 @@ Script is run with the following optional parameters `python run.py [-h] [-a AGE
 
 ### Automating
 
-Use Cron to have this script automatically run whenever you desire.  Though run aggressively and piLocator will block access to the site.  In their words, "If you are looking to create a notification system for **personal use**, please use the RSS feed and don't hit the site more than **once a minute**. High frequency bots will get blocked." I do 4 times a day, each 6 hours apart.
+Use Cron to have this script automatically run whenever you desire.  Though run aggressively and rpiLocator will block access to the site.  In their words, "If you are looking to create a notification system for **personal use**, please use the RSS feed and don't hit the site more than **once a minute**. High frequency bots will get blocked." I do 4 times a day, each 6 hours apart.
 
 To access cron, use the command `crontab -l` to view your user cronjobs, and `crontab -e` to edit them.
 
 ```cron
 0 */6 * * * /path/to/correct/python Path/To/Repository/run.py -a 0 -r US -m CM4 > /dev/null
 ```
+
+#### Anacron
+
+TODO: Include section on using Anacron, perfect alternative for a laptop or pc instead of cron for server.
+
+#### Docker
+
+TODO: Create Docker container for this, for kicks its kind of overkill
 
 ## Testing
 
@@ -65,10 +81,11 @@ A general flake8 check will check for everything.  But for continuous integratio
 flake8 --exclude flaskEnv/
 ```
 
-Linting can also be done with Python Black, `python black <file>`
+Linting can also be done with Python Black, `black <file>`.
 
 ## References
 
 * [rpilocator](https://rpilocator.com/)
 * [Python reading RSS feed](https://www.tutorialspoint.com/python_text_processing/python_reading_rss_feed.htm)
-* [Python send email gmail](https://mailtrap.io/blog/python-send-email-gmail/)
+* [Python send email gmail](https://mailtrap.io/blog/python-send-email-gmail/) - No longer used, but still good reference. Pull repo tag 1.0 for its use here.
+* [apprise messaging library](https://pypi.org/project/apprise/)
