@@ -61,11 +61,17 @@ To access cron, use the command `crontab -l` to view your user cronjobs, and `cr
 
 #### Anacron
 
+Follow steps from *run commands periodically with anacron on Linux* reference found at bottom of readme.
+
 TODO: Include section on using Anacron, perfect alternative for a laptop or pc instead of cron for server.
 
 #### Docker
 
-TODO: Create Docker container for this, for kicks its kind of overkill
+Build the docker image with command `docker build -t rpilocator-alert .`
+
+Run docker image with command `docker run -it --rm --env BOT_TOKEN=<TOKEN> rpilocator-alert [...]` The flags shown above for running run.py are passed in same way after image name.
+
+If you do not want to pass in the Telegram API token through env variable, use a docker secret instead.  Or if you don't want to send a message use the `-t` flag.
 
 ## Testing
 
@@ -89,3 +95,5 @@ Linting can also be done with Python Black, `black <file>`.
 * [Python reading RSS feed](https://www.tutorialspoint.com/python_text_processing/python_reading_rss_feed.htm)
 * [Python send email gmail](https://mailtrap.io/blog/python-send-email-gmail/) - No longer used, but still good reference. Pull repo tag 1.0 for its use here.
 * [apprise messaging library](https://pypi.org/project/apprise/)
+* [Run commands periodically with anacron on Linux](https://linuxconfig.org/how-to-run-commands-periodically-with-anacron-on-linux)
+

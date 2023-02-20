@@ -55,7 +55,7 @@ def sendTelegramAlert(subject: str, body: str) -> None:
     """
     load_dotenv()
     token = os.getenv("BOT_TOKEN")
-    if token is None or token is "":
+    if token == None or token == "":
         print("Error: Can't find env variable bot_token for Telegram.")
         return
     if len(body) >= 4096:
