@@ -63,8 +63,6 @@ To access cron, use the command `crontab -l` to view your user cronjobs, and `cr
 
 Follow steps from *run commands periodically with anacron on Linux* reference found at bottom of readme.
 
-TODO: Include section on using Anacron, perfect alternative for a laptop or pc instead of cron for server.
-
 #### Docker
 
 Build the docker image with command `docker build -t rpilocator-alert .`
@@ -72,6 +70,11 @@ Build the docker image with command `docker build -t rpilocator-alert .`
 Run docker image with command `docker run -it --rm --env BOT_TOKEN=<TOKEN> rpilocator-alert [...]` The flags shown above for running run.py are passed in same way after image name.
 
 If you do not want to pass in the Telegram API token through env variable, use a docker secret instead.  Or if you don't want to send a message use the `-t` flag.
+
+#### Minikube
+
+Have Minikube installed and started withe `minikube start`.  Assuming Minikube is running on same host as this repo.  With image built above, push to the local minikube with `minikube image load rpilocator-alert`.  Check that the image is present with `minikube image ls --format table`.  To run the image from the command line `kubectl run rpilocator-alert-container --image=rpilocator-alert --image-pull-policy=Never --restart=Never -- -t -a 10`.  This doesn't message, for that add the `--env="DNS_DOMAIN=cluster"` flag to `kubectl run ...`.  To view the logs use `kubectl logs rpilocator-alert-container`.
+
 
 ## Testing
 
@@ -96,4 +99,5 @@ Linting can also be done with Python Black, `black <file>`.
 * [Python send email gmail](https://mailtrap.io/blog/python-send-email-gmail/) - No longer used, but still good reference. Pull repo tag 1.0 for its use here.
 * [apprise messaging library](https://pypi.org/project/apprise/)
 * [Run commands periodically with anacron on Linux](https://linuxconfig.org/how-to-run-commands-periodically-with-anacron-on-linux)
-
+* [Using Local Docker Images With MiniKube](https://www.baeldung.com/docker-local-images-minikube)
+* [Docker Docs: Deploy to Kubernetes](https://docs.docker.com/get-started/kube-deploy/)

@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Cronjob
+metadata:
+  creationTimestamp: null
+  labels:
+    app: rpilocator-alert-container
+  name: rpilocator-alert-container
+spec:
+  schedule: "0 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+              - image: rpilocator-alert
+                name: rpilocator-alert
+                args:
+                - -t
+                - -a
+                - "10"
+                imagePullPolicy: Never
+                resources: {}
+          restartPolicy: Never
+
